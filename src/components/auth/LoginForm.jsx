@@ -64,16 +64,16 @@ const LoginForm = ({ onSwitchToRegister, onSuccess }) => {
   };
 
   return (
-    <Card className="p-6 w-full max-w-md mx-auto">
+    <Card className="p-6 w-full max-w-md mx-auto bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="space-y-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Welcome Back</h2>
-          <p className="text-gray-600">Sign in to your account</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Welcome Back</h2>
+          <p className="text-gray-600 dark:text-gray-400">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-1">
+            <label htmlFor="username" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Username or Email
             </label>
             <Input
@@ -84,11 +84,12 @@ const LoginForm = ({ onSwitchToRegister, onSuccess }) => {
               onChange={handleChange}
               placeholder="Enter your username or email"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Password
             </label>
             <Input
@@ -99,20 +100,25 @@ const LoginForm = ({ onSwitchToRegister, onSuccess }) => {
               onChange={handleChange}
               placeholder="Enter your password"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300" 
+            disabled={loading}
+          >
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
 
         <div className="text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
+          <span className="text-gray-600 dark:text-gray-400">Don't have an account? </span>
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-medium transition-colors duration-200"
           >
             Sign up here
           </button>

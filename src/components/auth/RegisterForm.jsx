@@ -118,16 +118,16 @@ const RegisterForm = ({ onSwitchToLogin, onSuccess }) => {
   };
 
   return (
-    <Card className="p-6 w-full max-w-md mx-auto">
+    <Card className="p-6 w-full max-w-md mx-auto bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="space-y-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Create Account</h2>
-          <p className="text-gray-600">Join the Programming Hangman community</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Create Account</h2>
+          <p className="text-gray-600 dark:text-gray-400">Join the Programming Hangman community</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-1">
+            <label htmlFor="username" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Username
             </label>
             <Input
@@ -138,11 +138,12 @@ const RegisterForm = ({ onSwitchToLogin, onSuccess }) => {
               onChange={handleChange}
               placeholder="Choose a username (3-20 characters)"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
+            <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Email
             </label>
             <Input
@@ -153,11 +154,12 @@ const RegisterForm = ({ onSwitchToLogin, onSuccess }) => {
               onChange={handleChange}
               placeholder="Enter your email address"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Password
             </label>
             <Input
@@ -168,11 +170,12 @@ const RegisterForm = ({ onSwitchToLogin, onSuccess }) => {
               onChange={handleChange}
               placeholder="Create a password (6+ characters)"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Confirm Password
             </label>
             <Input
@@ -183,20 +186,25 @@ const RegisterForm = ({ onSwitchToLogin, onSuccess }) => {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300" 
+            disabled={loading}
+          >
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
 
         <div className="text-center text-sm">
-          <span className="text-gray-600">Already have an account? </span>
+          <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-medium transition-colors duration-200"
           >
             Sign in here
           </button>

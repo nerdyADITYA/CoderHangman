@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
-import { User, Trophy, LogOut } from 'lucide-react';
+import { User, Trophy, LogOut, Sun, Moon } from 'lucide-react';
 import { getRandomSnippet } from '../data/codeSnippets';
 
 const Index = () => {
@@ -26,7 +26,9 @@ const Index = () => {
   const [score, setScore] = useState(0);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
-  
+  const [isFalling, setIsFalling] = useState(false);
+  const [theme, setTheme] = useState('light'); // Theme state
+
   const { toast } = useToast();
   const { user, isAuthenticated, logout, saveGameResult } = useAuth();
   const navigate = useNavigate();
@@ -44,18 +46,19 @@ const Index = () => {
     'React': ['Components', 'Hooks', 'Props', 'State', 'JSX']
   };
 
+  // Theme toggle logic
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+  }, []);
 
-
-  const hangmanStages = [
-    '  +---+\n      |\n      |\n      |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========',
-    '  +---+\n  |   |\n  O   |\n /|\\  |\n / \\  |\n      |\n========='
-  ];
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
 
   const startGame = () => {
     if (!selectedLanguage || !selectedTopic || !difficulty) {
@@ -67,7 +70,6 @@ const Index = () => {
       return;
     }
 
-    // Get random snippet based on selections using the new system
     const snippet = getRandomSnippet(selectedLanguage, selectedTopic, difficulty);
     
     console.log(`Selected: ${selectedLanguage} - ${selectedTopic} - ${difficulty}`);
@@ -81,6 +83,7 @@ const Index = () => {
     setWrongGuesses(0);
     setGameWon(false);
     setUserGuess('');
+    setIsFalling(false);
   };
 
   const makeGuess = () => {
@@ -97,7 +100,6 @@ const Index = () => {
     const answer = hiddenAnswer.toLowerCase();
     
     if (answer.includes(letter)) {
-      // Correct guess
       const newRevealedChars = [...revealedChars];
       for (let i = 0; i < answer.length; i++) {
         if (answer[i] === letter) {
@@ -106,14 +108,12 @@ const Index = () => {
       }
       setRevealedChars(newRevealedChars);
       
-      // Check if word is complete
       if (newRevealedChars.every(char => char)) {
         const gameScore = 10;
         setGameWon(true);
         setScore(score + gameScore);
         setGameState('gameOver');
         
-        // Save score if user is authenticated
         saveScore(gameScore, true);
         
         toast({
@@ -123,21 +123,21 @@ const Index = () => {
         });
       }
     } else {
-      // Wrong guess
       const newWrongGuesses = wrongGuesses + 1;
       setWrongGuesses(newWrongGuesses);
       
       if (newWrongGuesses >= maxWrongGuesses) {
-        setGameState('gameOver');
-        
-        // Save score even for lost games (score = 0)
-        saveScore(0, false);
-        
-        toast({
-          title: "Game Over",
-          description: `The answer was: ${hiddenAnswer}`,
-          variant: "destructive"
-        });
+        setIsFalling(true);
+        setTimeout(() => {
+          setGameState('gameOver');
+          saveScore(0, false);
+          
+          toast({
+            title: "Game Over",
+            description: `The answer was: ${hiddenAnswer}`,
+            variant: "destructive"
+          });
+        }, 1000);
       }
     }
     
@@ -156,6 +156,7 @@ const Index = () => {
     setWrongGuesses(0);
     setRevealedChars([]);
     setGameWon(false);
+    setIsFalling(false);
   };
 
   const displayWord = () => {
@@ -221,13 +222,12 @@ const Index = () => {
 
   if (gameState === 'menu') {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Navigation Header */}
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+        <div className="border-b bg-background/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
           <div className="max-w-6xl mx-auto px-8 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-bold">Hangman</h1>
+                <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">Hangman</h1>
               </div>
               
               <div className="flex items-center space-x-4">
@@ -235,23 +235,35 @@ const Index = () => {
                   variant="outline" 
                   size="sm"
                   onClick={() => navigate('/leaderboard')}
+                  className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
                 >
                   <Trophy className="w-4 h-4 mr-2" />
                   Leaderboard
                 </Button>
                 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleTheme}
+                  className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                >
+                  {theme === 'light' ? <Moon className="w-4 h-4 mr-2" /> : <Sun className="w-4 h-4 mr-2" />}
+                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </Button>
+
                 {isAuthenticated ? (
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                         {user.username.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium">{user.username}</span>
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{user.username}</span>
                     </div>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => navigate('/profile')}
+                      className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
                     >
                       <User className="w-4 h-4 mr-2" />
                       Profile
@@ -260,6 +272,7 @@ const Index = () => {
                       variant="outline" 
                       size="sm"
                       onClick={handleLogout}
+                      className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout
@@ -267,10 +280,19 @@ const Index = () => {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={handleLogin}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleLogin}
+                      className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                    >
                       Login
                     </Button>
-                    <Button size="sm" onClick={handleRegister}>
+                    <Button 
+                      size="sm" 
+                      onClick={handleRegister}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+                    >
                       Sign Up
                     </Button>
                   </div>
@@ -282,72 +304,75 @@ const Index = () => {
         
         <div className="p-8">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold text-center mb-2 text-foreground">
+            <h1 className="text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100">
               Programming Hangman Game
             </h1>
             {!isAuthenticated && (
-              <p className="text-center text-gray-600 mb-8">
+              <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
                 Sign up to save your scores and compete on the leaderboard!
               </p>
             )}
           
-          <Card className="p-8 max-w-2xl mx-auto">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Programming Language</label>
-                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languages.map(lang => (
-                      <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedLanguage && (
+            <Card className="p-8 max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Topic</label>
-                  <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a topic" />
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Programming Language</label>
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <SelectValue placeholder="Select a language" />
                     </SelectTrigger>
                     <SelectContent>
-                      {topics[selectedLanguage]?.map(topic => (
-                        <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                      {languages.map(lang => (
+                        <SelectItem key={lang} value={lang}>{lang}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Difficulty</label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
+                {selectedLanguage && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Topic</label>
+                    <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                      <SelectTrigger className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                        <SelectValue placeholder="Select a topic" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {topics[selectedLanguage]?.map(topic => (
+                          <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Difficulty</label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button 
+                  onClick={startGame} 
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+                >
+                  Start Game
+                </Button>
               </div>
+            </Card>
 
-              <Button onClick={startGame} className="w-full" size="lg">
-                Start Game
-              </Button>
+            <div className="text-center mt-8">
+              <Badge variant="secondary" className="text-lg p-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                Score: {score}
+              </Badge>
             </div>
-          </Card>
-
-          <div className="text-center mt-8">
-            <Badge variant="secondary" className="text-lg p-2">
-              Score: {score}
-            </Badge>
-          </div>
           </div>
         </div>
         
@@ -362,21 +387,46 @@ const Index = () => {
 
   if (gameState === 'playing') {
     return (
-      <div className="min-h-screen bg-background p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300 p-8">
+        <style>
+          {`
+            .hangman-part {
+              transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+              opacity: 0;
+              transform: scale(0.8);
+            }
+            .hangman-part.visible {
+              opacity: 1;
+              transform: scale(1);
+            }
+            .hangman-figure.falling {
+              animation: fall 1s ease-in-out forwards;
+            }
+            @keyframes fall {
+              0% {
+                transform: translateY(0);
+                opacity: 1;
+              }
+              100% {
+                transform: translateY(100px);
+                opacity: 0.3;
+              }
+            }
+          `}
+        </style>
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold">Programming Hangman</h1>
-            <Badge variant="secondary" className="text-lg p-2">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Programming Hangman</h1>
+            <Badge variant="secondary" className="text-lg p-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white">
               Score: {score}
             </Badge>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Game Area */}
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Code Snippet:</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Code Snippet:</h3>
                   <div className="bg-muted p-4 rounded mb-3">
                     <p className="text-sm text-muted-foreground mb-2 italic">{snippetDescription}</p>
                     <pre className="text-sm overflow-x-auto">
@@ -386,7 +436,7 @@ const Index = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Word to Guess:</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Word to Guess:</h3>
                   <div className="text-2xl font-mono bg-muted p-4 rounded text-center">
                     {displayWord()}
                   </div>
@@ -398,36 +448,85 @@ const Index = () => {
                     onChange={(e) => setUserGuess(e.target.value)}
                     placeholder="Enter a letter"
                     maxLength={1}
-                    className="flex-1"
+                    className="flex-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     onKeyPress={(e) => e.key === 'Enter' && makeGuess()}
                   />
-                  <Button onClick={makeGuess}>Guess</Button>
+                  <Button 
+                    onClick={makeGuess}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+                  >
+                    Guess
+                  </Button>
                 </div>
 
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Wrong guesses: {wrongGuesses}/{maxWrongGuesses}</span>
                   <span>Letters remaining: {revealedChars.filter(r => !r).length}</span>
                 </div>
               </div>
             </Card>
 
-            {/* Hangman Drawing */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Hangman</h3>
-              <pre className="text-sm font-mono bg-muted p-4 rounded">
-                {hangmanStages[wrongGuesses]}
-              </pre>
+            <Card className="p-6 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Hangman</h3>
+              <div className="bg-muted p-4 rounded flex justify-center items-center">
+                <svg width="200" height="250" viewBox="0 0 200 250" className={`w-full h-auto ${isFalling ? 'hangman-figure falling' : 'hangman-figure'}`}>
+                  <line x1="20" y1="230" x2="100" y2="230" stroke="currentColor" strokeWidth="10" />
+                  <line x1="60" y1="230" x2="60" y2="20" stroke="currentColor" strokeWidth="10" />
+                  <line x1="60" y1="20" x2="120" y2="20" stroke="currentColor" strokeWidth="10" />
+                  <line x1="120" y1="20" x2="120" y2="40" stroke="currentColor" strokeWidth="6" />
+                  
+                  <circle 
+                    cx="120" cy="60" r="20" 
+                    fill="none" stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 1 ? 'visible' : ''}`} 
+                  />
+                  
+                  <line 
+                    x1="120" y1="80" x2="120" y2="140" 
+                    stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 2 ? 'visible' : ''}`} 
+                  />
+                  
+                  <line 
+                    x1="120" y1="90" x2="90" y2="110" 
+                    stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 3 ? 'visible' : ''}`} 
+                  />
+                  
+                  <line 
+                    x1="120" y1="90" x2="150" y2="110" 
+                    stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 4 ? 'visible' : ''}`} 
+                  />
+                  
+                  <line 
+                    x1="120" y1="140" x2="100" y2="180" 
+                    stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 5 ? 'visible' : ''}`} 
+                  />
+                  
+                  <line 
+                    x1="120" y1="140" x2="140" y2="180" 
+                    stroke="currentColor" strokeWidth="6" 
+                    className={`hangman-part ${wrongGuesses >= 6 ? 'visible' : ''}`} 
+                  />
+                </svg>
+              </div>
               
               <div className="mt-4 space-y-2">
-                <Badge variant="outline">Language: {selectedLanguage}</Badge>
-                <Badge variant="outline">Topic: {selectedTopic}</Badge>
-                <Badge variant="outline">Difficulty: {difficulty}</Badge>
+                <Badge variant="outline" className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300">Language: {selectedLanguage}</Badge>
+                <Badge variant="outline" className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300">Topic: {selectedTopic}</Badge>
+                <Badge variant="outline" className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300">Difficulty: {difficulty}</Badge>
               </div>
             </Card>
           </div>
 
           <div className="text-center mt-8">
-            <Button variant="outline" onClick={resetGame}>
+            <Button 
+              variant="outline" 
+              onClick={resetGame}
+              className="hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+            >
               Back to Menu
             </Button>
           </div>
@@ -438,26 +537,33 @@ const Index = () => {
 
   if (gameState === 'gameOver') {
     return (
-      <div className="min-h-screen bg-background p-8 flex items-center justify-center">
-        <Card className="p-8 max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300 p-8 flex items-center justify-center">
+        <Card className="p-8 max-w-md mx-auto text-center bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <h2 className="text-3xl font-bold mb-4 text-gray-800 dark:text-gray-100">
             {gameWon ? '🎉 You Won!' : '💀 Game Over'}
           </h2>
           
           <div className="space-y-4">
-            <p className="text-lg">
+            <p className="text-lg text-gray-700 dark:text-gray-300">
               The answer was: <span className="font-bold">{hiddenAnswer}</span>
             </p>
             
-            <Badge variant="secondary" className="text-xl p-3">
+            <Badge variant="secondary" className="text-xl p-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white">
               Final Score: {score}
             </Badge>
 
             <div className="space-y-2">
-              <Button onClick={startGame} className="w-full">
+              <Button 
+                onClick={startGame} 
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+              >
                 Play Again
               </Button>
-              <Button variant="outline" onClick={resetGame} className="w-full">
+              <Button 
+                variant="outline" 
+                onClick={resetGame} 
+                className="w-full hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+              >
                 Back to Menu
               </Button>
             </div>
